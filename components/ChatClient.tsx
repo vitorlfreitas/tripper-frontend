@@ -47,19 +47,24 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
 
     const [isDesktop, setIsDesktop] = useState(false);
 
-  useEffect(() => {
-    const checkScreenWidth = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
+    useEffect(() => {
+        const checkScreenWidth = () => {
+            setIsDesktop(window.innerWidth >= 768);
+        };
 
-    checkScreenWidth();
+        checkScreenWidth();
 
-    window.addEventListener("resize", checkScreenWidth);
-    return () => window.removeEventListener("resize", checkScreenWidth);
-  }, []);
+        window.addEventListener("resize", checkScreenWidth);
+        return () => window.removeEventListener("resize", checkScreenWidth);
+    }, []);
 
     useEffect(() => {
-        const socket = new SockJS("http://localhost:8080/ws-chat");
+        const baseURL = process.env.NEXT_PUBLIC_API_URL?.replace(
+            "http://",
+            "https://"
+        );
+        const socket = new SockJS(`${baseURL}/ws-chat`);
+
         const client = new Client({
             webSocketFactory: () => socket as WebSocket,
             debug: (str) => console.log("[STOMP]", str),
@@ -71,11 +76,14 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
         client.onConnect = async () => {
             setConnected(true);
 
-            const res = await fetch("http://localhost:8080/chat/start", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: user.email }),
-            });
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/chat/start`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId: user.email }),
+                }
+            );
 
             let data;
             try {
@@ -88,7 +96,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
             setConversationId(data.conversationId);
 
             const historyRes = await fetch(
-                `http://localhost:8080/chat/history?userId=${user.email}&conversationId=${data.conversationId}`
+                `${process.env.NEXT_PUBLIC_API_URL}/chat/history?userId=${user.email}&conversationId=${data.conversationId}`
             );
 
             if (historyRes.ok) {
@@ -155,7 +163,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
     useEffect(() => {
         const fetchConversations = async () => {
             const res = await fetch(
-                `http://localhost:8080/chat/user/${user.email}`
+                `${process.env.NEXT_PUBLIC_API_URL}/chat/user/${user.email}`
             );
             let data;
             try {
@@ -175,7 +183,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
 
     const loadConversation = async (conversationId: number) => {
         const res = await fetch(
-            `http://localhost:8080/chat/${conversationId}/messages`
+            `${process.env.NEXT_PUBLIC_API_URL}/chat/${conversationId}/messages`
         );
         let history;
         try {
@@ -212,7 +220,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
             return;
         }
 
-        await fetch(`http://localhost:8080/chat/${id}/title`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/${id}/title`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title: editTitle }),
@@ -220,7 +228,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
 
         // Refresh list
         const res = await fetch(
-            `http://localhost:8080/chat/user/${user.email}`
+            `${process.env.NEXT_PUBLIC_API_URL}/chat/user/${user.email}`
         );
         const data = await res.json();
         setUserConversations(data);
@@ -233,13 +241,13 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
         );
         if (!confirmed) return;
 
-        await fetch(`http://localhost:8080/chat/${id}`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/${id}`, {
             method: "DELETE",
         });
 
         // Refresh the conversation list
         const res = await fetch(
-            `http://localhost:8080/chat/user/${user.email}`
+            `${process.env.NEXT_PUBLIC_API_URL}/chat/user/${user.email}`
         );
         const data = await res.json();
         setUserConversations(data);
@@ -254,7 +262,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
         if (!conversationId) return;
 
         const res = await fetch(
-            `http://localhost:8080/chat/${conversationId}/export/pdf`
+            `${process.env.NEXT_PUBLIC_API_URL}/chat/${conversationId}/export/pdf`
         );
 
         if (!res.ok) {
@@ -296,8 +304,12 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
             <aside
                 className="fixed top-0 left-0 z-20 w-64 bg-white p-4 overflow-y-auto shadow-md md:relative md:top-0 md:h-full"
                 style={{
-                  transform: isDesktop ? "none" : (sidebarOpen ? "translateX(0)" : "translateX(-100%)"),
-                  transition: "transform 0.3s ease-in-out",
+                    transform: isDesktop
+                        ? "none"
+                        : sidebarOpen
+                        ? "translateX(0)"
+                        : "translateX(-100%)",
+                    transition: "transform 0.3s ease-in-out",
                 }}
             >
                 <div className="flex justify-between items-center mb-4">

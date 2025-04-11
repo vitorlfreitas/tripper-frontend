@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import ChatClient from "@/components/ChatClient";
 
-// your code continues...
 
 
 export default async function ChatPage() {

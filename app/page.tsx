@@ -17,7 +17,7 @@ export default function HomePage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:8080/trip-plan', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trip-plan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tripDetails, userName, generatePdf: true }),
@@ -37,7 +37,7 @@ export default function HomePage() {
   const handleDownload = () => {
     if (response?.pdfFileName) {
       const link = document.createElement('a');
-      link.href = `http://localhost:8080/files/download/${response.pdfFileName}`;
+      link.href = `${process.env.NEXT_PUBLIC_API_URL}/files/download/${response.pdfFileName}`;
       link.download = response.pdfFileName;
       link.target = '_blank';
       link.click();
