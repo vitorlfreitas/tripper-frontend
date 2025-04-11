@@ -1,7 +1,11 @@
+
 import { getServerSession } from "next-auth";
-import { authOptions } from "../api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import ChatClient from "@/components/ChatClient";
+
+// your code continues...
+
 
 export default async function ChatPage() {
   const session = await getServerSession(authOptions);
