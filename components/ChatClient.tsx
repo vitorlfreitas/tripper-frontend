@@ -12,6 +12,7 @@ import {
     SendHorizonal,
     Menu,
     X,
+    PlusCircle,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -290,6 +291,28 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
         link.remove();
     };
 
+    // Start a new chat
+    const startNewChat = async () => {
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/chat/start`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: user.email }),
+            }
+        );
+
+        const data = await res.json();
+        setConversationId(data.conversationId);
+        setMessages([]);
+
+        const conversationsRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/chat/user/${user.email}`
+        );
+        const updatedList = await conversationsRes.json();
+        setUserConversations(updatedList);
+    };
+
     return (
         <main className="h-screen bg-gray-200 flex flex-col md:flex-row">
             {/* Mobile Backdrop */}
@@ -419,17 +442,29 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
 
             {/* Chat Window */}
             <section className="flex-1 flex flex-col items-center justify-center px-2 md:px-4 py-4 md:py-8">
-                <div className="w-full max-w-2xl flex flex-col bg-white shadow-md rounded-2xl overflow-hidden h-full">
-                    {/* Mobile Toggle Button */}
-                    <div className="md:hidden p-2">
+                <div className="relative w-full max-w-2xl flex flex-col bg-white shadow-md rounded-2xl overflow-hidden h-full">
+                    {/* Header: Mobile Toggle on left (mobile only) and New Chat button on right */}
+                    <header className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
+                        {/* Mobile Toggle Button */}
+                        <div className="md:hidden">
+                            <button
+                                className="text-gray-800"
+                                onClick={() => setSidebarOpen(true)}
+                            >
+                                <Menu />
+                            </button>
+                        </div>
+                        {/* New Chat Button */}
                         <button
-                            className="text-gray-800"
-                            onClick={() => setSidebarOpen(true)}
+                            onClick={startNewChat}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded ml-auto"
+                            title="New Chat"
                         >
-                            <Menu />
+                            <PlusCircle size={20} />
                         </button>
-                    </div>
+                    </header>
 
+                    {/* Message List */}
                     <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
                         {messages.length > 0 ? (
                             messages.map((msg, index) => {
@@ -484,7 +519,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
                         ) : (
                             <p className="text-gray-500 text-center mt-12">
                                 {conversationId
-                                    ? "No messages yet."
+                                    ? "No conversations yet. Start a new one!"
                                     : "Select a conversation to view messages."}
                             </p>
                         )}
@@ -497,7 +532,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
                                     className="w-8 h-8 rounded-full"
                                 />
                                 <div className="bg-gray-200 px-4 py-2 rounded-xl text-sm animate-pulse text-gray-800">
-                                    Tripper is typing
+                                    Tripper is typing{" "}
                                     <span className="animate-bounce">...</span>
                                 </div>
                             </div>
@@ -506,10 +541,10 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
                         <div ref={bottomRef} />
                     </div>
 
-                    {/* Input */}
+                    {/* Input Section */}
                     {conversationId && (
                         <div className="p-4 flex flex-row items-center gap-2">
-                            {/* Input takes up leftover space */}
+                            {/* Input Field */}
                             <input
                                 type="text"
                                 className="flex-1 min-w-0 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -523,7 +558,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
 
                             {/* Buttons */}
                             <div className="flex flex-row items-center gap-2 shrink-0">
-                                {/* Mobile-only button */}
+                                {/* Mobile-only Send Button */}
                                 <button
                                     onClick={sendMessage}
                                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition hover:cursor-pointer sm:hidden disabled:opacity-50 disabled:cursor-not-allowed"
@@ -533,7 +568,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
                                     <SendHorizonal size={18} />
                                 </button>
 
-                                {/* Desktop-only button */}
+                                {/* Desktop-only Send Button */}
                                 <button
                                     onClick={sendMessage}
                                     className="hidden sm:inline bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -542,7 +577,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
                                     Send
                                 </button>
 
-                                {/* Export button */}
+                                {/* Export Button */}
                                 <button
                                     onClick={() =>
                                         handleExportPdf(conversationId)
