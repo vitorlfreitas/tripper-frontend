@@ -326,7 +326,7 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
 
             {/* Sidebar */}
             <aside
-                className="fixed top-0 left-0 z-20 w-64 bg-white p-4 overflow-y-auto shadow-md md:relative md:top-0 md:h-full"
+                className="fixed top-0 left-0 z-20 w-64 bg-white p-4 overflow-y-auto shadow-md md:relative md:top-0 h-full"
                 style={{
                     transform: isDesktop
                         ? "none"
