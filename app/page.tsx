@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { signIn } from 'next-auth/react';
 
