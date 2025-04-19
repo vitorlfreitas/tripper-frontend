@@ -32,6 +32,7 @@ type Message = {
 };
 
 export default function ChatClient({ user }: { user: Session["user"] }) {
+    // State variables
     const [connected, setConnected] = useState(false);
     const [conversationId, setConversationId] = useState<number | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -41,7 +42,6 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
     const [userConversations, setUserConversations] = useState<Conversation[]>(
         []
     );
-
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editTitle, setEditTitle] = useState("");
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
@@ -49,18 +49,31 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
 
     const [isDesktop, setIsDesktop] = useState(false);
 
+    /**
+     * Check if the screen width is greater than or equal to 768px
+     */
     useEffect(() => {
+        // Check screen width on initial load
         const checkScreenWidth = () => {
+            // Check if the screen width is greater than or equal to 768px
             setIsDesktop(window.innerWidth >= 768);
         };
 
+        // Add event listener for window resize
         checkScreenWidth();
 
+        // Set up event listener for window resize
         window.addEventListener("resize", checkScreenWidth);
+
+        // Clean up event listener on component unmount
         return () => window.removeEventListener("resize", checkScreenWidth);
     }, []);
 
+    /**
+     * Initialize WebSocket connection and fetch chat history
+     */
     useEffect(() => {
+        
         const baseURL = process.env.NEXT_PUBLIC_API_URL?.replace(
             "http://",
             "https://"
