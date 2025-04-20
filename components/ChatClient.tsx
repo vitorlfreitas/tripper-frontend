@@ -1,7 +1,7 @@
 "use client";
 import { Session } from "next-auth";
 import { useEffect, useState, useRef } from "react";
-import SockJS from "sockjs-client";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { Client, IMessage } from "@stomp/stompjs";
 import {
     User,
@@ -13,7 +13,6 @@ import {
     Menu,
     X,
     PlusCircle,
-    
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -33,7 +32,7 @@ type Message = {
 
 export default function ChatClient({ user }: { user: Session["user"] }) {
     // State variables
-    const [connected, setConnected] = useState(false);
+    const { stompClient, connected } = useWebSocket();
     const [conversationId, setConversationId] = useState<number | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
@@ -73,24 +72,9 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
      * Initialize WebSocket connection and fetch chat history
      */
     useEffect(() => {
-        
-        const baseURL = process.env.NEXT_PUBLIC_API_URL?.replace(
-            "http://",
-            "https://"
-        );
-        const socket = new SockJS(`${baseURL}/ws-chat`);
+        if (!connected || !stompClient) return;
 
-        const client = new Client({
-            webSocketFactory: () => socket as WebSocket,
-            debug: (str) => console.log("[STOMP]", str),
-            reconnectDelay: 5000,
-        });
-
-        stompClient = client;
-
-        client.onConnect = async () => {
-            setConnected(true);
-
+        const initializeChat = async () => {
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/chat/start`,
                 {
@@ -100,47 +84,28 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
                 }
             );
 
-            let data;
-            try {
-                data = await res.json();
-                console.log("✅ Parsed response:", data);
-            } catch (err) {
-                console.error("❌ Failed to parse JSON:", err);
-            }
-
+            const data = await res.json();
             setConversationId(data.conversationId);
 
             const historyRes = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/chat/history?userId=${user.email}&conversationId=${data.conversationId}`
             );
-
             if (historyRes.ok) {
-                let history;
-                try {
-                    history = await historyRes.json();
-                    console.log("✅ Fetched history:", history);
-                } catch (err) {
-                    console.error("❌ Failed to parse history JSON:", err);
-                }
+                const history = await historyRes.json();
                 setMessages(history);
             }
 
-            client.subscribe(
+            stompClient.subscribe(
                 `/topic/chat/${data.conversationId}`,
                 (msg: IMessage) => {
-                    const body = JSON.parse(msg.body);
-                    setMessages(body);
+                    setMessages(JSON.parse(msg.body));
                     setIsTyping(false);
                 }
             );
         };
 
-        client.activate();
-
-        return () => {
-            client.deactivate();
-        };
-    }, []);
+        initializeChat();
+    }, [connected, stompClient, user.email]);
 
     const sendMessage = () => {
         if (!input.trim() || conversationId === null || !stompClient?.connected)
