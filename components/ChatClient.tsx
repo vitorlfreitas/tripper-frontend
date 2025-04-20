@@ -72,40 +72,18 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
      * Initialize WebSocket connection and fetch chat history
      */
     useEffect(() => {
-        if (!connected || !stompClient) return;
-
-        const initializeChat = async () => {
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/chat/start`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId: user.email }),
-                }
-            );
-
-            const data = await res.json();
-            setConversationId(data.conversationId);
-
-            const historyRes = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/chat/history?userId=${user.email}&conversationId=${data.conversationId}`
-            );
-            if (historyRes.ok) {
-                const history = await historyRes.json();
-                setMessages(history);
-            }
-
-            stompClient.subscribe(
-                `/topic/chat/${data.conversationId}`,
-                (msg: IMessage) => {
-                    setMessages(JSON.parse(msg.body));
-                    setIsTyping(false);
-                }
-            );
+        if (!connected || !stompClient || !conversationId) return;
+    
+        const subscribeToConversation = () => {
+            stompClient.subscribe(`/topic/chat/${conversationId}`, (msg: IMessage) => {
+                setMessages(JSON.parse(msg.body));
+                setIsTyping(false);
+            });
         };
+    
+        subscribeToConversation();
+    }, [connected, stompClient, conversationId]);
 
-        initializeChat();
-    }, [connected, stompClient, user.email]);
 
     const sendMessage = () => {
         if (!input.trim() || conversationId === null || !stompClient?.connected)
@@ -285,11 +263,9 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
         setConversationId(data.conversationId);
         setMessages([]);
 
-        const conversationsRes = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/chat/user/${user.email}`
-        );
-        const updatedList = await conversationsRes.json();
-        setUserConversations(updatedList);
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat/user/${user.email}`)
+        .then(res => res.json())
+        .then(setUserConversations);
     };
 
     return (
