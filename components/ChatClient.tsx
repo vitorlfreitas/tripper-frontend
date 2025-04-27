@@ -16,14 +16,14 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
-let stompClient: Client | null = null;
-
+// Type for conversations
 type Conversation = {
     id: number;
     title: string | null;
     startedAt: string;
 };
 
+// Type for messages
 type Message = {
     sender: "user" | "assistant";
     content: string;
