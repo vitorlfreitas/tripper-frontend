@@ -16,7 +16,7 @@ export function useWebSocket() {
     useEffect(() => {
 
         // Check if the environment variable is defined
-        const baseURL = process.env.NEXT_PUBLIC_API_URL?.replace("http://", "https://");
+        const baseURL = process.env.NEXT_PUBLIC_API_URL || "";
         
         const socket = new SockJS(`${baseURL}/ws-chat`);
 

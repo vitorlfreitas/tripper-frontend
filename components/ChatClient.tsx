@@ -2,7 +2,7 @@
 import { Session } from "next-auth";
 import { useEffect, useState, useRef } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { Client, IMessage } from "@stomp/stompjs";
+import { IMessage } from "@stomp/stompjs";
 import {
     User,
     MoreVertical,
@@ -75,10 +75,23 @@ export default function ChatClient({ user }: { user: Session["user"] }) {
         if (!connected || !stompClient || !conversationId) return;
     
         const subscribeToConversation = () => {
+            
             stompClient.subscribe(`/topic/chat/${conversationId}`, (msg: IMessage) => {
-                setMessages(JSON.parse(msg.body));
+
+                console.log("Raw WebSocket message:", msg);
+                console.log("Raw message body:", msg.body);
+            
+                try {
+                    const body = JSON.parse(msg.body);
+                    console.log("Parsed message body:", body);
+                    setMessages(body);
+                } catch (e) {
+                    console.error("Failed to parse WebSocket message body:", e);
+                }
+            
                 setIsTyping(false);
             });
+            
         };
     
         subscribeToConversation();

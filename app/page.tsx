@@ -50,10 +50,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
-      <section className="flex-grow flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-white text-center px-4">
-        <div className='flex gap-5 items-center mb-8'>
-          <img className='w-15' src="/tripper.png " alt="Tripper Icon" />
-          <h2 className="text-4xl font-bold text-gray-800">Tripper Chatbot</h2>
+      <section className="flex-grow flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-white text-center px-4 pb-5">
+        <div className='flex gap-5 items-center justify-center'>
+          <img src="/TRIPPER LOGO 2 NO BG.png" alt="Tripper" className='w-1/3' />
         </div>
         <h1 className="text-6xl font-bold text-gray-800 mb-8">
           Perfect Outfits, Every Forecast
